@@ -1,11 +1,103 @@
-html {
-  box-sizing: border-box;
+/*
+  CSS Reset
+  Adapted from https://www.joshwcomeau.com/css/custom-css-reset/ 
+ */
 
-  & :where(*, *::before, *::after) {
-    box-sizing: inherit;
+/* 1. Use a more-intuitive box-sizing model */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* 2. Remove default margin */
+* {
+  margin: 0;
+}
+
+/* 3. Enable keyword animations */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    interpolate-size: allow-keywords;
   }
 }
 
 body {
-  margin: 0;
+  /* 4. Add accessible line-height */
+  line-height: 1.5;
+  /* 5. Improve text rendering */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 6. Improve media defaults */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* 7. Inherit fonts for form controls */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+/* 8. Avoid text overflows */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+/* 9. Improve line wrapping */
+p {
+  text-wrap: pretty;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+
+/*
+  Theme
+*/
+
+:root {
+  --text-size-xl: 2rem;
+  --text-size-lg: 1.25rem;
+  --text-size-md: 1rem;
+  --text-size-sm: 0.875rem;
+  --text-size-xs: 0.75rem;
+
+  --font-system: system-ui, sans-serif;
+}
+
+/*
+  Base styles
+*/
+
+:root {
+  font-size: var(--text-size-md);
+  font-family: var(--font-system);
+}
+
+h1 {
+  font-size: var(--text-size-xl);
+}
+
+h2 {
+  font-size: var(--text-size-lg);
 }
