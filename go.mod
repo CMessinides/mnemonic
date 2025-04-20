@@ -3,6 +3,7 @@ module github.com/cmessinides/mnemonic
 go 1.23.5
 
 require (
+	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jmoiron/sqlx v1.4.0 // indirect
