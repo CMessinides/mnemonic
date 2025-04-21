@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cmessinides/mnemonic/internal/pagination"
 	"github.com/cmessinides/mnemonic/internal/tag"
 	"github.com/jmoiron/sqlx"
 	"modernc.org/sqlite"
@@ -26,7 +27,7 @@ type Bookmark struct {
 type BookmarkStore interface {
 	Create(title string, url string, tags []string) (*Bookmark, error)
 	GetByURL(url string) (*Bookmark, error)
-	GetMany(limit uint, offset uint) ([]*Bookmark, error)
+	GetPage(page uint64, pageSize uint64) (*pagination.Page[*Bookmark], error)
 }
 
 func NewSQLiteBookmarkStore(db *sql.DB) *SQLiteBookmarkStore {
@@ -71,14 +72,28 @@ func (bs *SQLiteBookmarkStore) Create(title string, url string, tags []string) (
 	return b, nil
 }
 
-func (bs *SQLiteBookmarkStore) GetMany(limit uint, offset uint) ([]*Bookmark, error) {
+func (bs *SQLiteBookmarkStore) GetPage(page uint64, pageSize uint64) (*pagination.Page[*Bookmark], error) {
 	bookmarks := []*Bookmark{}
+
+	limit := pageSize
+	offset := (page - 1) * pageSize
 	err := bs.db.Select(&bookmarks, "SELECT * FROM bookmarks LIMIT ? OFFSET ?", limit, offset)
 	if err != nil {
-		return bookmarks, fmt.Errorf("could not select bookmarks: %w", err)
+		return nil, fmt.Errorf("could not select bookmarks: %w", err)
 	}
 
-	return bookmarks, nil
+	var total uint64
+	err = bs.db.Get(&total, "SELECT COUNT(1) FROM bookmarks")
+	if err != nil {
+		return nil, fmt.Errorf("could not select bookmark total: %w", err)
+	}
+
+	return &pagination.Page[*Bookmark]{
+		Items:      bookmarks,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: max(total/pageSize, 1),
+	}, nil
 }
 
 func (bs *SQLiteBookmarkStore) GetByURL(url string) (*Bookmark, error) {

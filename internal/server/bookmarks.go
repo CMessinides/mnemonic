@@ -1,7 +1,10 @@
 package server
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/cmessinides/mnemonic/internal/bookmark"
 	"github.com/labstack/echo/v4"
@@ -18,7 +21,7 @@ func (a *bookmarksAPI) Create(c echo.Context) error {
 		Tags  []string
 	}
 
-	init.Tags = make([]string, 0)
+	init.Tags = []string{}
 
 	err := echo.FormFieldBinder(c).
 		MustString("title", &init.Title).
@@ -42,27 +45,38 @@ func (a *bookmarksAPI) Create(c echo.Context) error {
 }
 
 func (a *bookmarksAPI) List(c echo.Context) error {
-	var opts struct {
-		Limit  uint
-		Offset uint
-	}
-
+	var page, pageSize uint64
 	err := echo.QueryParamsBinder(c).
-		Uint("limit", &opts.Limit).
-		Uint("offset", &opts.Offset).
+		Uint64("page", &page).
+		Uint64("pageSize", &pageSize).
 		BindError()
 	if err != nil {
+		var berr *echo.BindingError
+		if errors.As(err, &berr) {
+			return echo.NewHTTPError(
+				http.StatusBadRequest,
+				fmt.Sprintf(
+					"invalid value for %s (got: %s)", berr.Field, strings.Join(berr.Values, ", "),
+				),
+			)
+		}
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	if opts.Limit == 0 {
-		opts.Limit = 100
+	if page == 0 {
+		page = 1
 	}
 
-	bookmarks, err := a.store.GetMany(opts.Limit, opts.Offset)
+	if pageSize == 0 {
+		pageSize = 25
+	} else if pageSize > 100 {
+		pageSize = 100
+	}
+
+	bp, err := a.store.GetPage(page, pageSize)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
-	return c.JSON(http.StatusOK, bookmarks)
+	return c.JSON(http.StatusOK, bp)
 }

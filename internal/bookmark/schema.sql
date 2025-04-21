@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS bookmarks
         url TEXT UNIQUE NOT NULL,
         tags TEXT DEFAULT "[]",
         created_at DATETIME NOT NULL,
-        updated_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL
     );
