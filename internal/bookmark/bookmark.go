@@ -21,11 +21,14 @@ type Bookmark struct {
 	URL       string    `json:"url"`
 	CreatedAt time.Time `json:"createdAt" db:"created_at"`
 	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
+	Archived  bool      `json:"archived" db:"archived"`
 	Tags      tag.Tags  `json:"tags"`
 }
 
 type BookmarkStore interface {
 	Create(title string, url string, tags []string) (*Bookmark, error)
+	Archive(ids ...int64) error
+	Restore(ids ...int64) error
 	GetByURL(url string) (*Bookmark, error)
 	GetPage(page uint64, pageSize uint64) (*pagination.Page[*Bookmark], error)
 }
@@ -72,18 +75,76 @@ func (bs *SQLiteBookmarkStore) Create(title string, url string, tags []string) (
 	return b, nil
 }
 
+func (bs *SQLiteBookmarkStore) Archive(ids ...int64) error {
+	now := time.Now()
+
+	query, args, err := sqlx.In("UPDATE bookmarks SET archived_at = ?, updated_at = ? WHERE id IN (?)", now, now, ids)
+	if err != nil {
+		return fmt.Errorf("could not archive bookmarks: %w", err)
+	}
+
+	query = bs.db.Rebind(query)
+	result, err := bs.db.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("could not archive bookmarks: %w", err)
+	}
+
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("could not archive bookmarks: %w", err)
+	}
+
+	if n == 0 {
+		return &NotFoundError{
+			Field: "id",
+			Value: ids,
+		}
+	}
+
+	return nil
+}
+
+func (bs *SQLiteBookmarkStore) Restore(ids ...int64) error {
+	now := time.Now()
+
+	query, args, err := sqlx.In("UPDATE bookmarks SET archived_at = NULL, updated_at = ? WHERE id IN (?)", now, ids)
+	if err != nil {
+		return fmt.Errorf("could not restore bookmarks: %w", err)
+	}
+
+	query = bs.db.Rebind(query)
+	result, err := bs.db.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("could not restore bookmarks: %w", err)
+	}
+
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("could not restore bookmarks: %w", err)
+	}
+
+	if n == 0 {
+		return &NotFoundError{
+			Field: "id",
+			Value: ids,
+		}
+	}
+
+	return nil
+}
+
 func (bs *SQLiteBookmarkStore) GetPage(page uint64, pageSize uint64) (*pagination.Page[*Bookmark], error) {
 	bookmarks := []*Bookmark{}
 
 	limit := pageSize
 	offset := (page - 1) * pageSize
-	err := bs.db.Select(&bookmarks, "SELECT * FROM bookmarks LIMIT ? OFFSET ?", limit, offset)
+	err := bs.db.Select(&bookmarks, "SELECT * FROM active_bookmarks LIMIT ? OFFSET ?", limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("could not select bookmarks: %w", err)
 	}
 
 	var total uint64
-	err = bs.db.Get(&total, "SELECT COUNT(1) FROM bookmarks")
+	err = bs.db.Get(&total, "SELECT COUNT(1) FROM active_bookmarks")
 	if err != nil {
 		return nil, fmt.Errorf("could not select bookmark total: %w", err)
 	}
@@ -99,7 +160,7 @@ func (bs *SQLiteBookmarkStore) GetPage(page uint64, pageSize uint64) (*paginatio
 func (bs *SQLiteBookmarkStore) GetByURL(url string) (*Bookmark, error) {
 	bookmark := &Bookmark{}
 	err := bs.db.Get(bookmark, `
-        SELECT * FROM bookmarks WHERE url = ?
+        SELECT * FROM all_bookmarks WHERE url = ?
     `, url)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

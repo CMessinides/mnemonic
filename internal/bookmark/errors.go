@@ -3,6 +3,7 @@ package bookmark
 import (
 	"errors"
 	"fmt"
+	"reflect"
 )
 
 type NotFoundError struct {
@@ -12,11 +13,26 @@ type NotFoundError struct {
 }
 
 func (e *NotFoundError) Error() string {
-	return fmt.Sprintf("bookmark not found with %s = %v: %s", e.Field, e.Value, e.Err.Error())
+	op := "="
+	if reflect.TypeOf(e.Value).Kind() == reflect.Slice {
+		op = "in"
+	}
+
+	msg := fmt.Sprintf("no bookmark found where %s %s %v", e.Field, op, e.Value)
+	if e.Err != nil {
+		msg = msg + ": " + e.Err.Error()
+	}
+
+	return msg
 }
 
 func (e *NotFoundError) Unwrap() error {
 	return e.Err
+}
+
+func IsNotFound(err error) bool {
+	var n *NotFoundError
+	return errors.As(err, &n)
 }
 
 type URLExistsError struct {

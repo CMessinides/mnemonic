@@ -34,6 +34,7 @@ func (a *bookmarksAPI) Create(c echo.Context) error {
 
 	b, err := a.store.Create(init.Title, init.URL, init.Tags)
 	if err != nil {
+		c.Logger().Error(err)
 		if bookmark.IsURLExists(err) {
 			return echo.NewHTTPError(http.StatusBadRequest, "URL already exists")
 		} else {
@@ -75,8 +76,55 @@ func (a *bookmarksAPI) List(c echo.Context) error {
 
 	bp, err := a.store.GetPage(page, pageSize)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
 	return c.JSON(http.StatusOK, bp)
+}
+
+func (a *bookmarksAPI) Archive(c echo.Context) error {
+	var id int64
+	err := echo.PathParamsBinder(c).
+		Int64("id", &id).
+		BindError()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	err = a.store.Archive(id)
+	if err != nil {
+		c.Logger().Error(err)
+
+		if bookmark.IsNotFound(err) {
+			return echo.NewHTTPError(http.StatusNotFound, "Bookmark not found")
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+		}
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+func (a *bookmarksAPI) Restore(c echo.Context) error {
+	var id int64
+	err := echo.PathParamsBinder(c).
+		Int64("id", &id).
+		BindError()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	err = a.store.Restore(id)
+	if err != nil {
+		c.Logger().Error(err)
+
+		if bookmark.IsNotFound(err) {
+			return echo.NewHTTPError(http.StatusNotFound, "Bookmark not found")
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+		}
+	}
+
+	return c.NoContent(http.StatusOK)
 }
