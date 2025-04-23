@@ -45,6 +45,7 @@ func NewServer(conf *Config, bookmarks bookmark.BookmarkStore) *Server {
 	b := &bookmarksAPI{store: bookmarks}
 	api.GET("/bookmarks", b.List)
 	api.POST("/bookmarks", b.Create)
+	api.PATCH("/bookmarks/:id", b.Update)
 	api.PUT("/bookmarks/:id/archive", b.Archive)
 	api.DELETE("/bookmarks/:id/archive", b.Restore)
 

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cmessinides/mnemonic/internal/db"
 	"github.com/cmessinides/mnemonic/internal/pagination"
 	"github.com/cmessinides/mnemonic/internal/tag"
 	"github.com/jmoiron/sqlx"
@@ -25,8 +26,16 @@ type Bookmark struct {
 	Tags      tag.Tags  `json:"tags"`
 }
 
+type BookmarkPatch struct {
+	Title    db.Optional[string]
+	URL      db.Optional[string]
+	Archived db.Optional[bool]
+	Tags     db.Optional[tag.Tags]
+}
+
 type BookmarkStore interface {
 	Create(title string, url string, tags []string) (*Bookmark, error)
+	Update(id int64, patch BookmarkPatch) error
 	Archive(ids ...int64) error
 	Restore(ids ...int64) error
 	GetByURL(url string) (*Bookmark, error)
@@ -73,6 +82,82 @@ func (bs *SQLiteBookmarkStore) Create(title string, url string, tags []string) (
 	}
 
 	return b, nil
+}
+
+func (bs *SQLiteBookmarkStore) Update(id int64, patch BookmarkPatch) error {
+	now := time.Now()
+
+	args := []any{}
+	query := &strings.Builder{}
+	query.WriteString("UPDATE bookmarks SET ")
+
+	setters := []db.QueryUpdater{
+		db.OptionalSetter[string]{
+			Optional: patch.Title,
+			Column:   "title",
+		},
+		db.OptionalSetter[string]{
+			Optional: patch.URL,
+			Column:   "url",
+		},
+		db.OptionalSetter[tag.Tags]{
+			Optional: patch.Tags,
+			Column:   "tags",
+		},
+	}
+
+	if patch.Archived.HasValue {
+		var value *time.Time
+		if patch.Archived.Value {
+			value = &now
+		}
+
+		setters = append(setters, db.OptionalSetter[*time.Time]{
+			Optional: db.Optional[*time.Time]{
+				HasValue: true,
+				Value:    value,
+			},
+			Column: "archived_at",
+		})
+	}
+
+	for _, s := range setters {
+		args, _ = s.UpdateQuery(query, args)
+	}
+
+	if len(args) == 0 {
+		// nothing to update
+		return nil
+	}
+
+	query.WriteString("updated_at = ? WHERE id = ?")
+	args = append(args, now, id)
+
+	result, err := bs.db.Exec(query.String(), args...)
+	if err != nil {
+		if isDuplicateUrl(err) {
+			return &URLExistsError{
+				URL: patch.URL.Value,
+				Err: err,
+			}
+		} else {
+			return fmt.Errorf("failed to update bookmark: %w", err)
+		}
+	}
+
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("could not update bookmark: %w", err)
+	}
+
+	if n == 0 {
+		return &NotFoundError{
+			Field: "id",
+			Value: id,
+		}
+	}
+
+	return nil
 }
 
 func (bs *SQLiteBookmarkStore) Archive(ids ...int64) error {
@@ -175,4 +260,14 @@ func (bs *SQLiteBookmarkStore) GetByURL(url string) (*Bookmark, error) {
 	}
 
 	return bookmark, nil
+}
+
+func isDuplicateUrl(err error) bool {
+	var sqliteErr *sqlite.Error
+
+	if errors.As(err, &sqliteErr) {
+		return sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE && strings.Contains(sqliteErr.Error(), "bookmarks.url")
+	}
+
+	return false
 }

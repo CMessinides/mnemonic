@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/cmessinides/mnemonic/internal/bookmark"
+	"github.com/cmessinides/mnemonic/internal/db"
+	"github.com/cmessinides/mnemonic/internal/tag"
 	"github.com/labstack/echo/v4"
 )
 
@@ -43,6 +45,56 @@ func (a *bookmarksAPI) Create(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, b)
+}
+
+func (a *bookmarksAPI) Update(c echo.Context) error {
+	var id int64
+	var title db.OptionalString
+	var url db.OptionalString
+	var archived db.OptionalBool
+	var tags db.OptionalTags
+
+	err := echo.PathParamsBinder(c).
+		MustInt64("id", &id).
+		BindError()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "id is required")
+	}
+
+	err = echo.FormFieldBinder(c).
+		BindUnmarshaler("title", &title).
+		BindUnmarshaler("url", &url).
+		BindUnmarshaler("archived", &archived).
+		CustomFunc("tags", func(values []string) []error {
+			tags.UnmarshalParams(values)
+			return []error{}
+		}).
+		BindError()
+	if err != nil {
+		var berr *echo.BindingError
+		if errors.As(err, &berr) {
+			return echo.NewHTTPError(
+				http.StatusBadRequest,
+				fmt.Sprintf(
+					"invalid value for %s (got: %s)", berr.Field, strings.Join(berr.Values, ", "),
+				),
+			)
+		}
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	err = a.store.Update(id, bookmark.BookmarkPatch{
+		Title:    db.Optional[string](title),
+		URL:      db.Optional[string](url),
+		Archived: db.Optional[bool](archived),
+		Tags:     db.Optional[tag.Tags](tags),
+	})
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+	}
+
+	return c.NoContent(http.StatusOK)
 }
 
 func (a *bookmarksAPI) List(c echo.Context) error {
