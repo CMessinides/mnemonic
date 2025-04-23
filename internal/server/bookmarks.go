@@ -49,10 +49,10 @@ func (a *bookmarksAPI) Create(c echo.Context) error {
 
 func (a *bookmarksAPI) Update(c echo.Context) error {
 	var id int64
-	var title db.OptionalString
-	var url db.OptionalString
-	var archived db.OptionalBool
-	var tags db.OptionalTags
+	var title *string
+	var url *string
+	var archived *bool
+	var tags []string
 
 	err := echo.PathParamsBinder(c).
 		MustInt64("id", &id).
@@ -62,13 +62,10 @@ func (a *bookmarksAPI) Update(c echo.Context) error {
 	}
 
 	err = echo.FormFieldBinder(c).
-		BindUnmarshaler("title", &title).
-		BindUnmarshaler("url", &url).
-		BindUnmarshaler("archived", &archived).
-		CustomFunc("tags", func(values []string) []error {
-			tags.UnmarshalParams(values)
-			return []error{}
-		}).
+		String("title", title).
+		String("url", url).
+		Bool("archived", archived).
+		Strings("tags", &tags).
 		BindError()
 	if err != nil {
 		var berr *echo.BindingError
@@ -84,10 +81,10 @@ func (a *bookmarksAPI) Update(c echo.Context) error {
 	}
 
 	err = a.store.Update(id, bookmark.BookmarkPatch{
-		Title:    db.Optional[string](title),
-		URL:      db.Optional[string](url),
-		Archived: db.Optional[bool](archived),
-		Tags:     db.Optional[tag.Tags](tags),
+		Title:    title,
+		URL:      url,
+		Archived: archived,
+		Tags:     tags,
 	})
 	if err != nil {
 		c.Logger().Error(err)

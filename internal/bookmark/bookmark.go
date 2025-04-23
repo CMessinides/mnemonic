@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cmessinides/mnemonic/internal/db"
 	"github.com/cmessinides/mnemonic/internal/pagination"
 	"github.com/cmessinides/mnemonic/internal/tag"
 	"github.com/jmoiron/sqlx"
@@ -27,10 +26,10 @@ type Bookmark struct {
 }
 
 type BookmarkPatch struct {
-	Title    db.Optional[string]
-	URL      db.Optional[string]
-	Archived db.Optional[bool]
-	Tags     db.Optional[tag.Tags]
+	Title    *string
+	URL      *string
+	Archived *bool
+	Tags     tag.Tags
 }
 
 type BookmarkStore interface {
@@ -91,38 +90,28 @@ func (bs *SQLiteBookmarkStore) Update(id int64, patch BookmarkPatch) error {
 	query := &strings.Builder{}
 	query.WriteString("UPDATE bookmarks SET ")
 
-	setters := []db.QueryUpdater{
-		db.OptionalSetter[string]{
-			Optional: patch.Title,
-			Column:   "title",
-		},
-		db.OptionalSetter[string]{
-			Optional: patch.URL,
-			Column:   "url",
-		},
-		db.OptionalSetter[tag.Tags]{
-			Optional: patch.Tags,
-			Column:   "tags",
-		},
+	if patch.Title != nil {
+		args = append(args, *patch.Title)
+		query.WriteString("title = ?, ")
 	}
 
-	if patch.Archived.HasValue {
-		var value *time.Time
-		if patch.Archived.Value {
-			value = &now
+	if patch.URL != nil {
+		args = append(args, *patch.URL)
+		query.WriteString("url = ?, ")
+	}
+
+	if patch.Archived != nil {
+		if *patch.Archived {
+			args = append(args, now)
+		} else {
+			args = append(args, nil)
 		}
-
-		setters = append(setters, db.OptionalSetter[*time.Time]{
-			Optional: db.Optional[*time.Time]{
-				HasValue: true,
-				Value:    value,
-			},
-			Column: "archived_at",
-		})
+		query.WriteString("archived_at = ?, ")
 	}
 
-	for _, s := range setters {
-		args, _ = s.UpdateQuery(query, args)
+	if patch.Tags != nil {
+		args = append(args, patch.Tags)
+		query.WriteString("tags = ?, ")
 	}
 
 	if len(args) == 0 {
@@ -137,7 +126,7 @@ func (bs *SQLiteBookmarkStore) Update(id int64, patch BookmarkPatch) error {
 	if err != nil {
 		if isDuplicateUrl(err) {
 			return &URLExistsError{
-				URL: patch.URL.Value,
+				URL: *patch.URL,
 				Err: err,
 			}
 		} else {
