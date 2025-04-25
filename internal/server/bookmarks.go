@@ -1,14 +1,9 @@
 package server
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/cmessinides/mnemonic/internal/bookmark"
-	"github.com/cmessinides/mnemonic/internal/db"
-	"github.com/cmessinides/mnemonic/internal/tag"
 	"github.com/labstack/echo/v4"
 )
 
@@ -31,7 +26,7 @@ func (a *bookmarksAPI) Create(c echo.Context) error {
 		Strings("tags", &init.Tags).
 		BindError()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return err
 	}
 
 	b, err := a.store.Create(init.Title, init.URL, init.Tags)
@@ -49,41 +44,33 @@ func (a *bookmarksAPI) Create(c echo.Context) error {
 
 func (a *bookmarksAPI) Update(c echo.Context) error {
 	var id int64
-	var title *string
-	var url *string
-	var archived *bool
+	var title string
+	var url string
+	var archived bool
 	var tags []string
 
 	err := echo.PathParamsBinder(c).
 		MustInt64("id", &id).
 		BindError()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "id is required")
+		return err
 	}
 
 	err = echo.FormFieldBinder(c).
-		String("title", title).
-		String("url", url).
-		Bool("archived", archived).
+		String("title", &title).
+		String("url", &url).
+		Bool("archived", &archived).
 		Strings("tags", &tags).
 		BindError()
 	if err != nil {
-		var berr *echo.BindingError
-		if errors.As(err, &berr) {
-			return echo.NewHTTPError(
-				http.StatusBadRequest,
-				fmt.Sprintf(
-					"invalid value for %s (got: %s)", berr.Field, strings.Join(berr.Values, ", "),
-				),
-			)
-		}
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return err
 	}
 
-	err = a.store.Update(id, bookmark.BookmarkPatch{
-		Title:    title,
-		URL:      url,
-		Archived: archived,
+	err = a.store.Update(bookmark.BookmarkPatch{
+		ID:       id,
+		Title:    &title,
+		URL:      &url,
+		Archived: &archived,
 		Tags:     tags,
 	})
 	if err != nil {
@@ -101,16 +88,7 @@ func (a *bookmarksAPI) List(c echo.Context) error {
 		Uint64("pageSize", &pageSize).
 		BindError()
 	if err != nil {
-		var berr *echo.BindingError
-		if errors.As(err, &berr) {
-			return echo.NewHTTPError(
-				http.StatusBadRequest,
-				fmt.Sprintf(
-					"invalid value for %s (got: %s)", berr.Field, strings.Join(berr.Values, ", "),
-				),
-			)
-		}
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return err
 	}
 
 	if page == 0 {
@@ -130,50 +108,4 @@ func (a *bookmarksAPI) List(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, bp)
-}
-
-func (a *bookmarksAPI) Archive(c echo.Context) error {
-	var id int64
-	err := echo.PathParamsBinder(c).
-		Int64("id", &id).
-		BindError()
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	err = a.store.Archive(id)
-	if err != nil {
-		c.Logger().Error(err)
-
-		if bookmark.IsNotFound(err) {
-			return echo.NewHTTPError(http.StatusNotFound, "Bookmark not found")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
-		}
-	}
-
-	return c.NoContent(http.StatusOK)
-}
-
-func (a *bookmarksAPI) Restore(c echo.Context) error {
-	var id int64
-	err := echo.PathParamsBinder(c).
-		Int64("id", &id).
-		BindError()
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	err = a.store.Restore(id)
-	if err != nil {
-		c.Logger().Error(err)
-
-		if bookmark.IsNotFound(err) {
-			return echo.NewHTTPError(http.StatusNotFound, "Bookmark not found")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
-		}
-	}
-
-	return c.NoContent(http.StatusOK)
 }

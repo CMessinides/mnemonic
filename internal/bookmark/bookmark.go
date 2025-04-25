@@ -26,6 +26,7 @@ type Bookmark struct {
 }
 
 type BookmarkPatch struct {
+	ID       int64
 	Title    *string
 	URL      *string
 	Archived *bool
@@ -34,9 +35,7 @@ type BookmarkPatch struct {
 
 type BookmarkStore interface {
 	Create(title string, url string, tags []string) (*Bookmark, error)
-	Update(id int64, patch BookmarkPatch) error
-	Archive(ids ...int64) error
-	Restore(ids ...int64) error
+	Update(patch BookmarkPatch) error
 	GetByURL(url string) (*Bookmark, error)
 	GetPage(page uint64, pageSize uint64) (*pagination.Page[*Bookmark], error)
 }
@@ -83,7 +82,7 @@ func (bs *SQLiteBookmarkStore) Create(title string, url string, tags []string) (
 	return b, nil
 }
 
-func (bs *SQLiteBookmarkStore) Update(id int64, patch BookmarkPatch) error {
+func (bs *SQLiteBookmarkStore) Update(patch BookmarkPatch) error {
 	now := time.Now()
 
 	args := []any{}
@@ -120,7 +119,7 @@ func (bs *SQLiteBookmarkStore) Update(id int64, patch BookmarkPatch) error {
 	}
 
 	query.WriteString("updated_at = ? WHERE id = ?")
-	args = append(args, now, id)
+	args = append(args, now, patch.ID)
 
 	result, err := bs.db.Exec(query.String(), args...)
 	if err != nil {
@@ -142,65 +141,7 @@ func (bs *SQLiteBookmarkStore) Update(id int64, patch BookmarkPatch) error {
 	if n == 0 {
 		return &NotFoundError{
 			Field: "id",
-			Value: id,
-		}
-	}
-
-	return nil
-}
-
-func (bs *SQLiteBookmarkStore) Archive(ids ...int64) error {
-	now := time.Now()
-
-	query, args, err := sqlx.In("UPDATE bookmarks SET archived_at = ?, updated_at = ? WHERE id IN (?)", now, now, ids)
-	if err != nil {
-		return fmt.Errorf("could not archive bookmarks: %w", err)
-	}
-
-	query = bs.db.Rebind(query)
-	result, err := bs.db.Exec(query, args...)
-	if err != nil {
-		return fmt.Errorf("could not archive bookmarks: %w", err)
-	}
-
-	n, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("could not archive bookmarks: %w", err)
-	}
-
-	if n == 0 {
-		return &NotFoundError{
-			Field: "id",
-			Value: ids,
-		}
-	}
-
-	return nil
-}
-
-func (bs *SQLiteBookmarkStore) Restore(ids ...int64) error {
-	now := time.Now()
-
-	query, args, err := sqlx.In("UPDATE bookmarks SET archived_at = NULL, updated_at = ? WHERE id IN (?)", now, ids)
-	if err != nil {
-		return fmt.Errorf("could not restore bookmarks: %w", err)
-	}
-
-	query = bs.db.Rebind(query)
-	result, err := bs.db.Exec(query, args...)
-	if err != nil {
-		return fmt.Errorf("could not restore bookmarks: %w", err)
-	}
-
-	n, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("could not restore bookmarks: %w", err)
-	}
-
-	if n == 0 {
-		return &NotFoundError{
-			Field: "id",
-			Value: ids,
+			Value: patch.ID,
 		}
 	}
 
