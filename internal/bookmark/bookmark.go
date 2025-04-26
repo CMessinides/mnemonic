@@ -38,6 +38,7 @@ type BookmarkStore interface {
 	Update(patch BookmarkPatch) error
 	GetByURL(url string) (*Bookmark, error)
 	GetPage(page uint64, pageSize uint64) (*pagination.Page[*Bookmark], error)
+	Delete(id int64) error
 }
 
 func NewSQLiteBookmarkStore(db *sql.DB) *SQLiteBookmarkStore {
@@ -190,6 +191,24 @@ func (bs *SQLiteBookmarkStore) GetByURL(url string) (*Bookmark, error) {
 	}
 
 	return bookmark, nil
+}
+
+func (bs *SQLiteBookmarkStore) Delete(id int64) error {
+	result, err := bs.db.Exec(`DELETE FROM bookmarks WHERE id = ?`, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete bookmark from database: %w", err)
+	}
+
+	n, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to delete bookmark from database: %w", err)
+	}
+
+	if n == 0 {
+		return &NotFoundError{Field: "id", Value: id}
+	}
+
+	return nil
 }
 
 func isDuplicateUrl(err error) bool {

@@ -74,8 +74,12 @@ func (a *bookmarksAPI) Update(c echo.Context) error {
 		Tags:     tags,
 	})
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+		if bookmark.IsNotFound(err) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		} else {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+		}
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -108,4 +112,27 @@ func (a *bookmarksAPI) List(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, bp)
+}
+
+func (a *bookmarksAPI) Delete(c echo.Context) error {
+	var id int64
+
+	err := echo.PathParamsBinder(c).
+		MustInt64("id", &id).
+		BindError()
+	if err != nil {
+		return err
+	}
+
+	err = a.store.Delete(id)
+	if err != nil {
+		if bookmark.IsNotFound(err) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		} else {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+		}
+	}
+
+	return c.NoContent(http.StatusOK)
 }

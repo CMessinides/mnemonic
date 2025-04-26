@@ -46,6 +46,7 @@ func NewServer(conf *Config, bookmarks bookmark.BookmarkStore) *Server {
 	api.GET("/bookmarks", b.List)
 	api.POST("/bookmarks", b.Create)
 	api.PATCH("/bookmarks/:id", b.Update)
+	api.DELETE("/bookmarks/:id", b.Delete)
 
 	return &Server{
 		config: conf,
