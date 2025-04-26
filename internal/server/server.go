@@ -7,7 +7,6 @@ import (
 	"github.com/cmessinides/mnemonic/internal/bookmark"
 	"github.com/cmessinides/mnemonic/internal/config"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 )
 
 type Server struct {
@@ -23,11 +22,9 @@ type Config struct {
 
 func NewServer(conf *Config, bookmarks bookmark.BookmarkStore) *Server {
 	e := echo.New()
-
-	if conf.Dev {
-		e.Logger.SetLevel(log.DEBUG)
-		e.Logger.Info("dev mode enabled")
-	}
+	e.HideBanner = true
+	e.Debug = conf.Dev
+	e.HTTPErrorHandler = customHTTPErrorHandler
 
 	t := NewTemplate()
 	e.Renderer = t
@@ -58,4 +55,9 @@ func NewServer(conf *Config, bookmarks bookmark.BookmarkStore) *Server {
 func (s *Server) Start() {
 	address := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
 	s.e.Logger.Fatal(s.e.Start(address))
+}
+
+func customHTTPErrorHandler(err error, c echo.Context) {
+	c.Logger().Error(err)
+	c.Echo().DefaultHTTPErrorHandler(err, c)
 }
