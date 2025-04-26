@@ -42,6 +42,28 @@ func (a *bookmarksAPI) Create(c echo.Context) error {
 	return c.JSON(http.StatusCreated, b)
 }
 
+func (a *bookmarksAPI) Read(c echo.Context) error {
+	var id int64
+
+	err := echo.PathParamsBinder(c).
+		MustInt64("id", &id).
+		BindError()
+	if err != nil {
+		return err
+	}
+
+	b, err := a.store.Get(id)
+	if err != nil {
+		if bookmark.IsNotFound(err) {
+			return echo.NewHTTPError(http.StatusNotFound, err.Error())
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+
+	return c.JSON(http.StatusOK, b)
+}
+
 func (a *bookmarksAPI) Update(c echo.Context) error {
 	var id int64
 	var title string

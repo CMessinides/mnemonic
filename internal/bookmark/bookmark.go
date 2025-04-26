@@ -36,6 +36,7 @@ type BookmarkPatch struct {
 type BookmarkStore interface {
 	Create(title string, url string, tags []string) (*Bookmark, error)
 	Update(patch BookmarkPatch) error
+	Get(id int64) (*Bookmark, error)
 	GetByURL(url string) (*Bookmark, error)
 	GetPage(page uint64, pageSize uint64) (*pagination.Page[*Bookmark], error)
 	Delete(id int64) error
@@ -171,6 +172,26 @@ func (bs *SQLiteBookmarkStore) GetPage(page uint64, pageSize uint64) (*paginatio
 		PageSize:   pageSize,
 		TotalPages: max(total/pageSize, 1),
 	}, nil
+}
+
+func (bs *SQLiteBookmarkStore) Get(id int64) (*Bookmark, error) {
+	bookmark := &Bookmark{}
+	err := bs.db.Get(bookmark, `
+        SELECT * FROM all_bookmarks WHERE id = ?
+    `, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &NotFoundError{
+				Field: "id",
+				Value: id,
+				Err:   err,
+			}
+		}
+
+		return nil, fmt.Errorf("failed to read bookmark from database: %w", err)
+	}
+
+	return bookmark, nil
 }
 
 func (bs *SQLiteBookmarkStore) GetByURL(url string) (*Bookmark, error) {
