@@ -266,6 +266,7 @@ select {
 }
 
 .btn-sm {
+  --icon-size: 1rem;
   padding-block: 0.125rem;
   font-size: var(--text-size-sm);
 }
