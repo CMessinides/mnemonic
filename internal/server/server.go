@@ -42,8 +42,14 @@ func NewServer(conf *Config, bookmarks bookmark.BookmarkStore) *Server {
 	})
 	e.Renderer = t
 
+	e.RouteNotFound("/*", customNotFoundHandler)
+	e.RouteNotFound("/api/*", apiNotFoundHandler)
+
 	h := &homeController{bookmarks: bookmarks}
 	e.GET("/", h.Show)
+	e.GET("/bad", func(c echo.Context) error {
+		return fmt.Errorf("this is error 1: %w", fmt.Errorf("this is error 2"))
+	})
 
 	api := e.Group("/api/v1")
 
@@ -63,9 +69,4 @@ func NewServer(conf *Config, bookmarks bookmark.BookmarkStore) *Server {
 func (s *Server) Start() {
 	address := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
 	s.e.Logger.Fatal(s.e.Start(address))
-}
-
-func customHTTPErrorHandler(err error, c echo.Context) {
-	c.Logger().Error(err)
-	c.Echo().DefaultHTTPErrorHandler(err, c)
 }
