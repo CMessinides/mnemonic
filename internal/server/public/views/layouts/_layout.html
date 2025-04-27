@@ -13,15 +13,7 @@
     {{end}}
 </head>
 <body class="{{if .View}}{{.View}}{{end}}">
-    <header class="banner">
-        <div class="content">
-            <a class="logo" href="/" aria-label="Mnemonic">
-                <svg height="20" width="20">
-                    <use xlink:href="{{asset "logos.svg"}}#square"></use>
-                </svg>
-            </a>
-        </div>
-    </header>
+    {{template "_header.html" .}}
     <main class="main">
         <div class="content">
             {{block "content" .}}{{end}}  
