@@ -4,13 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{block "title" .}}Mnemonic{{end}}</title>
-    <link rel="stylesheet" href="/assets/main.css">
-    <script defer type="module" src="/assets/main.js"></script>
+    <link rel="shortcut icon" href="{{asset "icon.svg"}}">
+    {{stylesheet "main.css"}}
+    {{script "main.js"}}
+    {{if .View}}
+        {{printf "%s.css" .View | stylesheetIfExists}}
+        {{printf "%s.js" .View | scriptIfExists}}
+    {{end}}
 </head>
-<body>
-    <div class="main">
-        {{block "content" .}}{{end}}  
-    </div>
+<body class="{{if .View}}{{.View}}{{end}}">
+    <header class="banner">
+        <div class="content">
+            <a class="logo" href="/" aria-label="Mnemonic">
+                <svg height="20" width="20">
+                    <use xlink:href="{{asset "logos.svg"}}#square"></use>
+                </svg>
+            </a>
+        </div>
+    </header>
+    <main class="main">
+        <div class="content">
+            {{block "content" .}}{{end}}  
+        </div>
+    </main>
 </body>
 </html>
 {{/* vim: set ft=gotmpl: */}}

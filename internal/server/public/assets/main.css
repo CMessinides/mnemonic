@@ -71,6 +71,13 @@ h6 {
   text-wrap: balance;
 }
 
+/* 10. Remove list styling when role="list" is explicit. */
+ul:where([role="list"]),
+ol:where([role="list"]) {
+  list-style: none;
+  padding-inline-start: 0;
+}
+
 /*
   Theme
 */
@@ -82,7 +89,73 @@ h6 {
   --text-size-sm: 0.875rem;
   --text-size-xs: 0.75rem;
 
-  --font-system: system-ui, sans-serif;
+  --font-system-sans: system-ui, sans-serif;
+  --font-system-serif: ui-serif, serif;
+
+  --font-weight-thing: 100;
+  --font-weight-extra-light: 200;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extra-bold: 800;
+  --font-weight-black: 900;
+
+  --color-gray-5: #f9fafb;
+  --color-gray-10: #f3f4f6;
+  --color-gray-20: #e5e7eb;
+  --color-gray-30: #d1d5db;
+  --color-gray-40: #9ca3af;
+  --color-gray-50: #6b7280;
+  --color-gray-60: #4b5563;
+  --color-gray-70: #374151;
+  --color-gray-80: #1f2937;
+  --color-gray-90: #111827;
+  --color-gray-95: #030712;
+
+  --color-violet-5: #f5f3ff;
+  --color-violet-10: #ede9fe;
+  --color-violet-20: #ddd6fe;
+  --color-violet-30: #c4b5fd;
+  --color-violet-40: #a78bfa;
+  --color-violet-50: #8b5cf6;
+  --color-violet-60: #7c3aed;
+  --color-violet-70: #6d28d9;
+  --color-violet-80: #5b21b6;
+  --color-violet-90: #4c1d95;
+  --color-violet-95: #2e1065;
+
+  --color-surface-0: light-dark(white, var(--color-gray-95));
+  --color-surface-1: light-dark(var(--color-gray-10), var(--color-gray-90));
+  --color-surface-2: light-dark(var(--color-gray-20), var(--color-gray-80));
+  --color-surface-input: light-dark(white, var(--color-gray-90));
+  --color-border: light-dark(var(--color-gray-30), var(--color-gray-70));
+  --color-text-0: light-dark(var(--color-gray-90), var(--color-gray-10));
+  --color-text-1: light-dark(var(--color-gray-70), var(--color-gray-30));
+  --color-text-2: var(--color-gray-50);
+
+  --color-accent: light-dark(var(--color-violet-70), var(--color-violet-30));
+  --color-accent-inverse: light-dark(
+    var(--color-violet-5),
+    var(--color-violet-95)
+  );
+
+  --radius: 4px;
+
+  --gutter: 1rem;
+}
+
+@media screen and (min-width: 36em) {
+  :root {
+    --gutter: 2rem;
+  }
+}
+
+@media screen and (min-width: 56em) {
+  :root {
+    --gutter: 3rem;
+  }
 }
 
 /*
@@ -91,13 +164,158 @@ h6 {
 
 :root {
   font-size: var(--text-size-md);
-  font-family: var(--font-system);
+  font-family: var(--font-system-sans);
+  color-scheme: light dark;
+}
+
+body {
+  background-color: var(--color-surface-0);
+  color: var(--color-text-0);
 }
 
 h1 {
   font-size: var(--text-size-xl);
+  font-weight: var(--font-weight-medium);
 }
 
 h2 {
   font-size: var(--text-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.25;
+}
+
+h3 {
+  font-size: var(--text-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+:is(h1, h2, h3):has(> .icon) {
+  display: flex;
+  align-items: start;
+  gap: 0.5ch;
+
+  & > .icon {
+    margin-top: calc((1lh - var(--icon-size, 1em)) / 2);
+    color: var(--icon-color, var(--color-text-2));
+  }
+}
+
+h2 {
+  --icon-size: 1.5rem;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+input,
+textarea,
+select {
+  background-color: var(--color-surface-input);
+  border: 1px var(--color-border) solid;
+  border-radius: var(--radius);
+
+  &::placeholder {
+    color: var(--color-text-2);
+  }
+}
+
+/*
+  Blocks
+*/
+
+/* Stack */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--stack-gap, 0.75rem);
+}
+
+/* Icon */
+
+.icon {
+  height: var(--icon-size, 1em);
+  width: var(--icon-size, 1em);
+  flex: none;
+}
+
+/* Button */
+
+.btn {
+  --icon-size: 1em;
+  --btn-surface: var(--color-surface-2);
+  --btn-text: var(--color-text-0);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: var(--radius);
+  background-color: var(--btn-surface);
+  color: var(--btn-text);
+
+  &:hover {
+    background-color: color-mix(
+      in oklch,
+      var(--btn-surface) 90%,
+      currentColor 10%
+    );
+  }
+}
+
+.btn-sm {
+  padding-block: 0.125rem;
+  font-size: var(--text-size-sm);
+}
+
+.btn-primary {
+  --btn-surface: var(--color-accent);
+  --btn-text: var(--color-accent-inverse);
+}
+
+/* Banner */
+
+.banner {
+  padding-block: 0.75rem;
+  background-color: var(--color-surface-1);
+
+  & .logo {
+    color: inherit;
+  }
+
+  & .logo svg {
+    height: 1.25rem;
+    width: 1.25rem;
+  }
+}
+
+/* Section */
+
+.section-header {
+  display: flex;
+  align-items: start;
+  gap: 0.75rem;
+  border-block-end: 1px var(--color-border) solid;
+  padding-block-end: 0.75rem;
+  margin-block-end: 0.75rem;
+}
+
+.section-action {
+  margin-inline-start: auto;
+}
+
+/*
+  Utilities
+*/
+
+.content {
+  margin-inline: auto;
+  max-width: var(--content-max-width, 64rem);
+  padding-inline: var(--gutter);
+}
+
+.text-2 {
+  color: var(--color-text-2);
 }

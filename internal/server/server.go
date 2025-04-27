@@ -2,11 +2,11 @@ package server
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/cmessinides/mnemonic/internal/bookmark"
 	"github.com/cmessinides/mnemonic/internal/config"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type Server struct {
@@ -24,18 +24,23 @@ func NewServer(conf *Config, bookmarks bookmark.BookmarkStore) *Server {
 	e := echo.New()
 	e.HideBanner = true
 	e.Debug = conf.Dev
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: `{"method":"${method}","uri":"${uri}","status":"${status}"}` + "\n",
+	}))
 	e.HTTPErrorHandler = customHTTPErrorHandler
 
-	t := NewTemplate()
+	assets := NewAssetsFS(AssetConfig{
+		PublicPath: "/assets",
+		Dev:        conf.Dev,
+	})
+	e.StaticFS(assets.PublicPath, assets)
+
+	funcs := assets.TemplateFuncs()
+	t := NewTemplate(funcs)
 	e.Renderer = t
 
-	e.GET("/", func(c echo.Context) error {
-		return c.Render(http.StatusOK, "home.html", map[string]any{"Name": "Cam"})
-	})
-
-	e.StaticFS("/assets", GetAssetsFS(AssetConfig{
-		Dev: conf.Dev,
-	}))
+	h := &homeController{bookmarks: bookmarks}
+	e.GET("/", h.Show)
 
 	api := e.Group("/api/v1")
 
