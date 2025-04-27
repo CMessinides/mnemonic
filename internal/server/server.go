@@ -36,7 +36,7 @@ func NewServer(conf *Config, bookmarks bookmark.BookmarkStore) *Server {
 	e.StaticFS(assets.PublicPath, assets)
 
 	funcs := assets.TemplateFuncs()
-	t := NewTemplate(TemplateConf{
+	t := NewTemplate(TemplateConfig{
 		Dev:         conf.Dev,
 		CustomFuncs: funcs,
 	})

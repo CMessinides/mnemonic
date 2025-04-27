@@ -20,7 +20,7 @@ var layouts embed.FS
 //go:embed public/views/partials/*.html
 var partials embed.FS
 
-type TemplateConf struct {
+type TemplateConfig struct {
 	Dev         bool
 	CustomFuncs template.FuncMap
 }
@@ -67,7 +67,7 @@ func (e *EmbeddedTemplate) ExecuteTemplate(w io.Writer, name string, data any) e
 	return t.ExecuteTemplate(w, name, data)
 }
 
-func NewTemplate(conf TemplateConf) *echo.TemplateRenderer {
+func NewTemplate(conf TemplateConfig) *echo.TemplateRenderer {
 	f := template.FuncMap{
 		"formatISOTimestamp": func(t time.Time) string {
 			return t.Format(time.RFC3339)
