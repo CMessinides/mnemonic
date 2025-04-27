@@ -47,9 +47,6 @@ func NewServer(conf *Config, bookmarks bookmark.BookmarkStore) *Server {
 
 	h := &homeController{bookmarks: bookmarks}
 	e.GET("/", h.Show)
-	e.GET("/bad", func(c echo.Context) error {
-		return fmt.Errorf("this is error 1: %w", fmt.Errorf("this is error 2"))
-	})
 
 	api := e.Group("/api/v1")
 
