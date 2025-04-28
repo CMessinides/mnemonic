@@ -83,11 +83,11 @@ ol:where([role="list"]) {
 */
 
 :root {
-  --text-size-xl: 2rem;
-  --text-size-lg: 1.25rem;
-  --text-size-md: 1rem;
-  --text-size-sm: 0.875rem;
   --text-size-xs: 0.75rem;
+  --text-size-sm: 0.875rem;
+  --text-size-md: 1rem;
+  --text-size-lg: 1.25rem;
+  --text-size-xl: 2rem;
 
   --font-system-sans: system-ui, sans-serif;
   --font-system-serif: ui-serif, serif;
@@ -143,18 +143,28 @@ ol:where([role="list"]) {
 
   --radius: 4px;
 
-  --gutter: 1rem;
+  --space-unit: 1rem;
+  --space-3xs: calc(0.125 * var(--space-unit));
+  --space-2xs: calc(0.25 * var(--space-unit));
+  --space-xs: calc(0.5 * var(--space-unit));
+  --space-sm: calc(0.75 * var(--space-unit));
+  --space-md: var(--space-unit);
+  --space-lg: calc(1.5 * var(--space-unit));
+  --space-xl: calc(2 * var(--space-unit));
+  --space-2xl: calc(3 * var(--space-unit));
+
+  --gutter: var(--space-md);
 }
 
 @media screen and (min-width: 36em) {
   :root {
-    --gutter: 2rem;
+    --gutter: var(--space-xl);
   }
 }
 
 @media screen and (min-width: 56em) {
   :root {
-    --gutter: 3rem;
+    --gutter: var(--space-2xl);
   }
 }
 
@@ -189,21 +199,6 @@ h3 {
   font-weight: var(--font-weight-semibold);
 }
 
-:is(h1, h2, h3):has(> .icon) {
-  display: flex;
-  align-items: start;
-  gap: 0.5ch;
-
-  & > .icon {
-    margin-top: calc((1lh - var(--icon-size, 1em)) / 2);
-    color: var(--icon-color, var(--color-text-2));
-  }
-}
-
-h2 {
-  --icon-size: 1.5rem;
-}
-
 a {
   color: var(--color-accent);
 }
@@ -230,7 +225,7 @@ select {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--stack-gap, 0.75rem);
+  gap: var(--stack-gap, var(--space-sm));
 }
 
 /* Icon */
@@ -249,8 +244,8 @@ select {
   --btn-text: var(--color-text-0);
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs) var(--space-xs);
   border: 0;
   border-radius: var(--radius);
   background-color: var(--btn-surface);
@@ -267,7 +262,7 @@ select {
 
 .btn-sm {
   --icon-size: 1rem;
-  padding-block: 0.125rem;
+  padding-block: var(--space-3xs);
   font-size: var(--text-size-sm);
 }
 
@@ -279,7 +274,7 @@ select {
 /* Banner */
 
 .banner {
-  padding-block: 0.75rem;
+  padding-block: var(--space-sm);
   background-color: var(--color-surface-1);
 
   & .logo {
@@ -288,7 +283,7 @@ select {
 
   & .logo svg {
     height: 1.25rem;
-    width: 1.25rem;
+    width: auto;
   }
 }
 
@@ -297,14 +292,35 @@ select {
 .section-header {
   display: flex;
   align-items: start;
-  gap: 0.75rem;
+  gap: var(--space-sm);
   border-block-end: 1px var(--color-border) solid;
-  padding-block-end: 0.75rem;
-  margin-block-end: 0.75rem;
+  padding-block-end: var(--space-sm);
+  margin-block-end: var(--space-sm);
 }
 
 .section-action {
   margin-inline-start: auto;
+}
+
+/*
+  Compositions (combining blocks)
+*/
+
+/* Icons in headings */
+
+:is(h1, h2, h3):has(> .icon) {
+  display: flex;
+  align-items: start;
+  gap: 0.5ch;
+
+  & > .icon {
+    margin-top: calc((1lh - var(--icon-size, 1em)) / 2);
+    color: var(--icon-color, var(--color-text-2));
+  }
+}
+
+h2 {
+  --icon-size: 1.5rem;
 }
 
 /*
