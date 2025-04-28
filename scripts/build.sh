@@ -8,8 +8,7 @@ build_assets() (
     npx esbuild "*.js" "*.css" \
         --bundle --minify \
         --outdir=../public/dist \
-        --entry-names=[dir]/[name]-[hash] \
-        --metafile=../public/dist/meta.json
+        --entry-names=[dir]/[name]-[hash]
 )
 
 build_mnemonicd() {
