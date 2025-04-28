@@ -8,7 +8,7 @@ build_ui() (
     npx esbuild "*.js" "*.css" \
         --bundle --minify \
         --outdir=../public/dist \
-        --entry-names=[dir]/[name]-[hash]
+        --entry-names=[dir]/[name]
 )
 
 build_mnemonicd() {

@@ -43,18 +43,18 @@ func (a *AssetsFS) Open(name string) (fs.File, error) {
 }
 
 func (a *AssetsFS) FileExists(name string) (bool, error) {
-	sf, ok := a.fs.(fs.StatFS)
-	if !ok {
-		return false, errors.New("assets filesystem is not a StatFS")
-	}
-
-	info, err := sf.Stat(name)
+	file, err := a.Open(name)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return false, nil
 		} else {
 			return false, err
 		}
+	}
+
+	info, err := file.Stat()
+	if err != nil {
+		return false, err
 	}
 
 	return !info.IsDir(), nil
