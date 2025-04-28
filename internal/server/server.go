@@ -3,9 +3,9 @@ package server
 import (
 	"fmt"
 
-	"github.com/cmessinides/mnemonic/internal/assets"
 	"github.com/cmessinides/mnemonic/internal/bookmark"
 	"github.com/cmessinides/mnemonic/internal/config"
+	"github.com/cmessinides/mnemonic/internal/ui"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -30,14 +30,14 @@ func NewServer(conf *Config, bookmarks bookmark.BookmarkStore) *Server {
 	}))
 	e.HTTPErrorHandler = customHTTPErrorHandler
 
-	assets := assets.NewAssetsFS(assets.AssetConfig{
+	assets := ui.NewAssetsFS(ui.AssetConfig{
 		PublicPath: "/assets",
 		Dev:        conf.Dev,
 	})
 	e.StaticFS(assets.PublicPath, assets)
 
 	funcs := assets.TemplateFuncs()
-	t := NewTemplate(TemplateConfig{
+	t := ui.NewTemplate(ui.TemplateConfig{
 		Dev:         conf.Dev,
 		CustomFuncs: funcs,
 	})

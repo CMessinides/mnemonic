@@ -1,4 +1,4 @@
-package server
+package ui
 
 import (
 	"embed"
@@ -12,13 +12,13 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-//go:embed public/views/*.html
+//go:embed views/*.html
 var views embed.FS
 
-//go:embed public/views/layouts/*.html
+//go:embed views/layouts/*.html
 var layouts embed.FS
 
-//go:embed public/views/partials/*.html
+//go:embed views/partials/*.html
 var partials embed.FS
 
 type TemplateConfig struct {
@@ -32,19 +32,19 @@ type DevTemplate struct {
 
 func (d *DevTemplate) ExecuteTemplate(w io.Writer, name string, data any) error {
 	t := template.New("default.html").Funcs(d.funcs)
-	t, err := t.ParseFS(os.DirFS("internal/server/public/views/layouts"), "*.html")
+	t, err := t.ParseFS(os.DirFS("internal/ui/views/layouts"), "*.html")
 	if err != nil {
 		return err
 	}
 
-	t, err = t.ParseFS(os.DirFS("internal/server/public/views/partials"), "*.html")
+	t, err = t.ParseFS(os.DirFS("internal/ui/views/partials"), "*.html")
 	if err != nil {
 		return err
 	}
 
 	p := parseTemplateName(name)
 
-	t, err = t.ParseFiles("internal/server/public/views/" + p.File)
+	t, err = t.ParseFiles("internal/ui/views/" + p.File)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (e *EmbeddedTemplate) ExecuteTemplate(w io.Writer, name string, data any) e
 
 	p := parseTemplateName(name)
 
-	t, err := shared.ParseFS(views, "public/views/"+p.File)
+	t, err := shared.ParseFS(views, "views/"+p.File)
 	if err != nil {
 		return err
 	}
@@ -86,8 +86,8 @@ func NewTemplate(conf TemplateConfig) *echo.TemplateRenderer {
 
 	if !conf.Dev {
 		shared := template.New("default.html").Funcs(f)
-		shared = template.Must(shared.ParseFS(layouts, "public/views/layouts/*.html"))
-		shared = template.Must(shared.ParseFS(partials, "public/views/partials/*.html"))
+		shared = template.Must(shared.ParseFS(layouts, "views/layouts/*.html"))
+		shared = template.Must(shared.ParseFS(partials, "views/partials/*.html"))
 		return &echo.TemplateRenderer{
 			Template: &EmbeddedTemplate{
 				shared: shared,

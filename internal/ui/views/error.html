@@ -1,0 +1,11 @@
+{{template "_layout.html" .}}
+{{define "title"}}Unexpected Error{{end}}
+{{define "content"}}
+    <h1>Unexpected Error</h1>
+    <details>
+        <summary>The gory details</summary>
+        <p>HTTP Status: {{.Code}}</p>
+        <p>Error: {{.Err.Error}}</p>
+    </details>
+{{end}}
+{{/* vim: set ft=gotmpl: */}}

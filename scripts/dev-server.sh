@@ -2,8 +2,8 @@
 
 set -e
 
-watch_assets() (
-    cd internal/assets/src && \
+watch_ui() (
+    cd internal/ui/src && \
     npx esbuild "*.js" "*.css" \
         --bundle --watch=forever \
         --outdir=../public/dist \
@@ -16,6 +16,6 @@ watch_server() {
 }
 
 (trap 'kill 0' INT; \
-    watch_assets & \
+    watch_ui & \
     watch_server & \
     wait)

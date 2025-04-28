@@ -2,8 +2,8 @@
 
 set -e
 
-build_assets() (
-    cd internal/assets/src && \
+build_ui() (
+    cd internal/ui/src && \
     rm ../public/dist/* && \
     npx esbuild "*.js" "*.css" \
         --bundle --minify \
@@ -15,5 +15,5 @@ build_mnemonicd() {
     go build ./cmd/mnemonicd
 }
 
-build_assets
+build_ui
 build_mnemonicd

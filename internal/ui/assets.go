@@ -1,4 +1,4 @@
-package assets
+package ui
 
 import (
 	"embed"
@@ -30,7 +30,7 @@ func NewAssetsFS(conf AssetConfig) *AssetsFS {
 	}
 
 	if conf.Dev {
-		a.fs = os.DirFS("internal/assets/public")
+		a.fs = os.DirFS("internal/ui/public")
 	} else {
 		a.fs = echo.MustSubFS(assets, "public")
 	}

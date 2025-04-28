@@ -1,0 +1,78 @@
+{{template "_layout.html" .}}
+{{define "title"}}Home{{end}}
+{{define "content"}}
+    <div class="header">
+        <h1>
+            <svg class="logo" aria-describedby="logo-title" width="153" height="32">
+                <title id="logo-title">Mnemonic</title>
+                <use xlink:href="{{asset "logos.svg"}}#full-inverted"></use>
+            </svg>
+        </h1>
+        <form class="searchbar" method="GET" action="/search">
+            {{icon "search-24"}}
+            <input type="search" name="q" aria-label="Search" placeholder="Search everything" />
+        </form>
+    </div>
+    <div class="sections">
+        {{block "bookmarks" .}}
+            <section class="section">
+                <div class="section-header">
+                    <h2>
+                        {{icon "bookmark-24"}}
+                        Bookmarks
+                    </h2>
+                    <button class="btn btn-sm btn-primary section-action">
+                        {{icon "plus-16"}}
+                        Add
+                    </button>
+                </div>
+                {{if .BookmarksError}}
+                    <p>There was an error retrieving bookmarks: {{.BookmarksError}}</p>
+                {{else if len .Bookmarks.Items}}
+                    <ul class="stack" role="list">
+                        {{range .Bookmarks.Items}}
+                            <li>
+                                <h3>
+                                    <a href="{{.URL}}" target="_blank">{{.Title}}</a>
+                                </h3>
+                                <div class="bookmark-details">
+                                </div>
+                            </li>
+                        {{end}}
+                    </ul>
+                {{end}}
+            </section>
+        {{end}}
+        {{block "feeds" .}}
+            <section class="section">
+                <div class="section-header">
+                    <h2>
+                        {{icon "rss-24"}}
+                        Feeds
+                    </h2>
+                    <button class="btn btn-sm btn-primary section-action">
+                        {{icon "plus-16"}}
+                        Add
+                    </button>
+                </div>
+                <p>Coming soon&hellip;</p>
+            </section>
+        {{end}}
+        {{block "crawlers" .}}
+            <section class="section">
+                <div class="section-header">
+                    <h2>
+                        {{icon "library-24"}}
+                        Mirrors
+                    </h2>
+                    <button class="btn btn-sm btn-primary section-action">
+                        {{icon "plus-16"}}
+                        Add
+                    </button>
+                </div>
+                <p>Coming soon&hellip;</p>
+            </section>
+        {{end}}
+    </div>
+{{end}}
+{{/* vim: set ft=gotmpl: */}}
