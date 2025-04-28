@@ -4,6 +4,7 @@ set -e
 
 build_assets() (
     cd internal/assets/src && \
+    rm ../public/dist/* && \
     npx esbuild "*.js" "*.css" \
         --bundle --minify \
         --outdir=../public/dist \
