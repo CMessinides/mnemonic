@@ -1,0 +1,8 @@
+{
+  "name": "@mnemonic/mnemonic",
+  "private": true,
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "esbuild": "^0.25.3"
+  }
+}

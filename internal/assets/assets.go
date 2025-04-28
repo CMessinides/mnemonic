@@ -1,4 +1,4 @@
-package server
+package assets
 
 import (
 	"embed"
@@ -11,7 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-//go:embed all:public/assets
+//go:embed all:public
 var assets embed.FS
 
 type AssetConfig struct {
@@ -30,9 +30,9 @@ func NewAssetsFS(conf AssetConfig) *AssetsFS {
 	}
 
 	if conf.Dev {
-		a.fs = os.DirFS("internal/server/public/assets")
+		a.fs = os.DirFS("internal/assets/public")
 	} else {
-		a.fs = echo.MustSubFS(assets, "public/assets")
+		a.fs = echo.MustSubFS(assets, "public")
 	}
 
 	return a
@@ -68,7 +68,7 @@ func (a *AssetsFS) TemplateFuncs() template.FuncMap {
 	stylesheet := func(filename string) template.HTML {
 		return template.HTML(
 			fmt.Sprintf(
-				`<link rel="stylesheet" href="%s/%s">`,
+				`<link rel="stylesheet" href="%s/dist/%s">`,
 				template.HTMLEscapeString(a.PublicPath),
 				template.HTMLEscapeString(filename),
 			),
@@ -78,7 +78,7 @@ func (a *AssetsFS) TemplateFuncs() template.FuncMap {
 	script := func(filename string) template.HTML {
 		return template.HTML(
 			fmt.Sprintf(
-				`<script defer type="module" src="%s/%s"></script>`,
+				`<script defer type="module" src="%s/dist/%s"></script>`,
 				template.HTMLEscapeString(a.PublicPath),
 				template.HTMLEscapeString(filename),
 			),
@@ -90,14 +90,14 @@ func (a *AssetsFS) TemplateFuncs() template.FuncMap {
 		"stylesheet": stylesheet,
 		"script":     script,
 		"assetIfExists": func(filename string) string {
-			if exists, _ := a.FileExists(filename); !exists {
+			if exists, _ := a.FileExists("dist/" + filename); !exists {
 				return ""
 			}
 
 			return asset(filename)
 		},
 		"stylesheetIfExists": func(filename string) template.HTML {
-			if exists, _ := a.FileExists(filename); !exists {
+			if exists, _ := a.FileExists("dist/" + filename); !exists {
 				return ""
 			}
 
