@@ -6,6 +6,7 @@ import (
 	"io"
 	"maps"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -41,12 +42,14 @@ func (d *DevTemplate) ExecuteTemplate(w io.Writer, name string, data any) error 
 		return err
 	}
 
-	t, err = t.ParseFiles("internal/server/public/views/" + name)
+	p := parseTemplateName(name)
+
+	t, err = t.ParseFiles("internal/server/public/views/" + p.File)
 	if err != nil {
 		return err
 	}
 
-	return t.ExecuteTemplate(w, name, data)
+	return t.ExecuteTemplate(w, p.Template, data)
 }
 
 type EmbeddedTemplate struct {
@@ -59,12 +62,14 @@ func (e *EmbeddedTemplate) ExecuteTemplate(w io.Writer, name string, data any) e
 		return err
 	}
 
-	t, err := shared.ParseFS(views, "public/views/"+name)
+	p := parseTemplateName(name)
+
+	t, err := shared.ParseFS(views, "public/views/"+p.File)
 	if err != nil {
 		return err
 	}
 
-	return t.ExecuteTemplate(w, name, data)
+	return t.ExecuteTemplate(w, p.Template, data)
 }
 
 func NewTemplate(conf TemplateConfig) *echo.TemplateRenderer {
@@ -93,4 +98,24 @@ func NewTemplate(conf TemplateConfig) *echo.TemplateRenderer {
 			Template: &DevTemplate{funcs: f},
 		}
 	}
+}
+
+type templateNameParts struct {
+	File     string
+	Template string
+}
+
+func parseTemplateName(name string) templateNameParts {
+	p := templateNameParts{
+		File:     name,
+		Template: name,
+	}
+
+	if strings.Contains(name, "#") {
+		parts := strings.SplitN(name, "#", 2)
+		p.File = parts[0]
+		p.Template = parts[1]
+	}
+
+	return p
 }

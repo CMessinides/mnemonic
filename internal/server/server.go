@@ -47,6 +47,7 @@ func NewServer(conf *Config, bookmarks bookmark.BookmarkStore) *Server {
 
 	h := &homeController{bookmarks: bookmarks}
 	e.GET("/", h.Show)
+	e.GET("/_views/bookmarks", h.ShowBookmarks)
 
 	api := e.Group("/api/v1")
 

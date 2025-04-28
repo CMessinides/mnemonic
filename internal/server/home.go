@@ -21,7 +21,7 @@ func (h *homeController) Show(c echo.Context) error {
 	}
 	data.View = "home"
 
-	bookmarks, err := h.bookmarks.GetPage(1, 30)
+	bookmarks, err := h.bookmarks.GetPage(1, 10)
 	if err != nil {
 		c.Logger().Warn(err)
 		status = http.StatusInternalServerError
@@ -31,4 +31,25 @@ func (h *homeController) Show(c echo.Context) error {
 	}
 
 	return c.Render(status, "home.html", data)
+}
+
+func (h *homeController) ShowBookmarks(c echo.Context) error {
+	status := http.StatusOK
+	var data struct {
+		View           string
+		Bookmarks      *pagination.Page[*bookmark.Bookmark]
+		BookmarksError string
+	}
+	data.View = "home"
+
+	bookmarks, err := h.bookmarks.GetPage(1, 10)
+	if err != nil {
+		c.Logger().Warn(err)
+		status = http.StatusInternalServerError
+		data.BookmarksError = err.Error()
+	} else {
+		data.Bookmarks = bookmarks
+	}
+
+	return c.Render(status, "home.html#bookmarks", data)
 }
