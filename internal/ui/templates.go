@@ -21,11 +21,6 @@ var layouts embed.FS
 //go:embed views/partials/*.html
 var partials embed.FS
 
-type TemplateConfig struct {
-	Dev         bool
-	CustomFuncs template.FuncMap
-}
-
 type DevTemplate struct {
 	funcs template.FuncMap
 }
@@ -72,7 +67,7 @@ func (e *EmbeddedTemplate) ExecuteTemplate(w io.Writer, name string, data any) e
 	return t.ExecuteTemplate(w, p.Template, data)
 }
 
-func NewTemplate(conf TemplateConfig) *echo.TemplateRenderer {
+func NewTemplateRenderer(conf UIConfig) *echo.TemplateRenderer {
 	f := template.FuncMap{
 		"formatISOTimestamp": func(t time.Time) string {
 			return t.Format(time.RFC3339)
@@ -82,7 +77,7 @@ func NewTemplate(conf TemplateConfig) *echo.TemplateRenderer {
 		},
 	}
 
-	maps.Copy(f, conf.CustomFuncs)
+	maps.Copy(f, conf.TemplateFuncs)
 
 	if !conf.Dev {
 		shared := template.New("default.html").Funcs(f)

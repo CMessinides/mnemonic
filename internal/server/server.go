@@ -30,18 +30,11 @@ func NewServer(conf *Config, bookmarks bookmark.BookmarkStore) *Server {
 	}))
 	e.HTTPErrorHandler = customHTTPErrorHandler
 
-	assets := ui.NewAssetsFS(ui.AssetConfig{
-		PublicPath: "/assets",
-		Dev:        conf.Dev,
+	u := ui.NewUI(ui.UIConfig{
+		Dev:       conf.Dev,
+		AssetPath: "/assets",
 	})
-	e.StaticFS(assets.PublicPath, assets)
-
-	funcs := assets.TemplateFuncs()
-	t := ui.NewTemplate(ui.TemplateConfig{
-		Dev:         conf.Dev,
-		CustomFuncs: funcs,
-	})
-	e.Renderer = t
+	u.ConfigureServer(e)
 
 	e.RouteNotFound("/*", customNotFoundHandler)
 	e.RouteNotFound("/api/*", apiNotFoundHandler)

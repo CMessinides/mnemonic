@@ -24,9 +24,9 @@ type AssetsFS struct {
 	fs         fs.FS
 }
 
-func NewAssetsFS(conf AssetConfig) *AssetsFS {
+func NewAssetsFS(conf UIConfig) *AssetsFS {
 	a := &AssetsFS{
-		PublicPath: conf.PublicPath,
+		PublicPath: conf.AssetPath,
 	}
 
 	if conf.Dev {
