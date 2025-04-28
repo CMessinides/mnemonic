@@ -86,8 +86,8 @@ func NewTemplate(conf TemplateConfig) *echo.TemplateRenderer {
 
 	if !conf.Dev {
 		shared := template.New("default.html").Funcs(f)
-		shared = template.Must(shared.ParseFS(layouts))
-		shared = template.Must(shared.ParseFS(partials))
+		shared = template.Must(shared.ParseFS(layouts, "public/views/layouts/*.html"))
+		shared = template.Must(shared.ParseFS(partials, "public/views/partials/*.html"))
 		return &echo.TemplateRenderer{
 			Template: &EmbeddedTemplate{
 				shared: shared,
